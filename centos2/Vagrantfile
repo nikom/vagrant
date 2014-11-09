@@ -1,0 +1,57 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure("2") do |config|
+  
+  config.vm.box = "centos6.4x86_64"
+
+######totest
+  #config.vm.provider "virtualbox" do |v|
+  #     v.name = "centos_slave1"
+  #end
+
+  # config.vm.provider "virtualbox" do |v|
+  #    v.gui = true
+  # end
+######
+
+  config.vm.network :forwarded_port, host: 6789, guest: 80
+  config.vm.network :forwarded_port, host: 8082, guest: 8080
+  #config.vm.network "public_network", bridge: 'en0: WLAN (AirPort)' 
+  config.vm.network "private_network", ip: "192.168.50.5"
+
+ config.vm.provision "shell" do |s|
+    s.inline = "echo $1"
+    s.args   = "'Hi Niko!'"
+  end
+
+ config.vm.provision "shell" do |s|
+       s.inline = "sudo /etc/init.d/iptables stop"
+     #   sudo iptables -L -n -v --line-numbers
+     #s.inline = "sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 8080 -j ACCEPT" 
+ end
+
+  config.vm.provision :shell do |shell|
+    shell.inline = "mkdir -p /etc/puppet/modules;
+                    puppet module install --force rtyler/jenkins;
+                    puppet module install --force puppetlabs-stdlib;
+                    puppet module install --force puppetlabs-java"
+
+   end
+
+  config.vm.provision :puppet do |puppet|
+     puppet.manifests_path = "manifests"
+     puppet.manifest_file  = "default.pp"
+     puppet.options = "--verbose --debug"
+  end
+
+  config.vm.provision :puppet do |puppet|
+     puppet.manifests_path = "manifests"
+     puppet.manifest_file  = "my_jenkins_client.pp"
+     puppet.options = "--verbose --debug"
+  end
+
+end
