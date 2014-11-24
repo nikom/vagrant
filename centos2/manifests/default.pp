@@ -1,5 +1,5 @@
 file { '/etc/motd':
-    content => "Welcome to your Vagrant-built virtual machine!
+    content => "Welcome to your Vagrant-built virtual machine: $role!
                 Managed by Puppet.\n"
   }
  

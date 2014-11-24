@@ -14,7 +14,7 @@ class my_jenkins_client {
 }
 
 class { 'jenkins::slave':
-        masterurl => 'http://virtguest:8080',
+        masterurl => 'http://jenkins.master:8080',
         #ui_user => 'adminuser',
         #ui_pass => 'adminpass',
       }

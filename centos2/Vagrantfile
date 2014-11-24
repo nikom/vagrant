@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure("2") do |config|
   
-  config.vm.box = "centos6.4x86_64"
+  config.vm.box = "CentOS-6.4-x86_64-v20131103.box"
 
 ######totest
   #config.vm.provider "virtualbox" do |v|
@@ -21,20 +21,36 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, host: 6789, guest: 80
   config.vm.network :forwarded_port, host: 8082, guest: 8080
   #config.vm.network "public_network", bridge: 'en0: WLAN (AirPort)' 
-  config.vm.network "private_network", ip: "192.168.50.5"
+  #config.vm.network "private_network", ip: "192.168.50.5"
+  config.vm.network "public_network", ip: "10.17.2.148"
 
  config.vm.provision "shell" do |s|
     s.inline = "echo $1"
-    s.args   = "'Hi Niko!'"
+    s.args   = "'--- PROVISIONING SLAVE ---'"
   end
 
+  config.vm.provision :hosts do |provisioner|
+    provisioner.add_localhost_hostnames = false
+    provisioner.add_host '127.0.0.1', ['jenkins.slave','localhost','localhost.domain']
+	provisioner.add_host '127.0.1.1', ['jenkins.slave','localhost','localhost.domain']
+	provisioner.add_host '10.17.2.145', ['jenkins.master']
+	provisioner.add_host '10.17.2.91', ['tux121b001']
+	provisioner.add_host '10.17.2.77', ['tux121b007']
+  end
+  
  config.vm.provision "shell" do |s|
-       s.inline = "sudo /etc/init.d/iptables stop"
+     s.inline = "sudo /etc/init.d/iptables stop"
      #   sudo iptables -L -n -v --line-numbers
-     #s.inline = "sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 8080 -j ACCEPT" 
+     s.inline = "sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 8080 -j ACCEPT" 
  end
+ 
+  config.vm.provision "shell" do |s|
+       s.inline = "sudo yum install ntp"
+	   s.inline = "sudo ntpdate pool.ntp.org"
+  end
 
   config.vm.provision :shell do |shell|
+  
     shell.inline = "mkdir -p /etc/puppet/modules;
                     puppet module install --force rtyler/jenkins;
                     puppet module install --force puppetlabs-stdlib;
@@ -43,6 +59,9 @@ Vagrant.configure("2") do |config|
    end
 
   config.vm.provision :puppet do |puppet|
+   puppet.facter = {
+      "role" => "SLAVE"
+    }
      puppet.manifests_path = "manifests"
      puppet.manifest_file  = "default.pp"
      puppet.options = "--verbose --debug"
@@ -55,3 +74,4 @@ Vagrant.configure("2") do |config|
   end
 
 end
+
